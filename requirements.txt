@@ -1,0 +1,7 @@
+flask
+flask-cors
+alpaca-py
+pandas
+numpy
+requests
+websocket-client

@@ -1,0 +1,1207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>ScalpAI — Crypto Trading Dashboard</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0a0e1a;--bg2:#111827;--bg3:#1a2236;--bg4:#222d42;
+  --text:#e8edf5;--text2:#8b9ab5;--text3:#4a5568;
+  --green:#10b981;--green2:#065f46;--red:#ef4444;--red2:#7f1d1d;
+  --amber:#f59e0b;--blue:#3b82f6;--purple:#8b5cf6;
+  --border:#1e2d4a;--border2:#2a3f5f;
+  --btc:#f7931a;--eth:#627eea;--sol:#9945ff;
+  --radius:12px;--radius2:8px;
+}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:-apple-system,'SF Pro Display',sans-serif;font-size:14px;overflow:hidden}@media(min-width:500px){body{overflow:auto}.app{height:auto;min-height:100vh}.scroll-body{overflow:visible;padding-bottom:20px}.bottom-nav{position:sticky}}
+.app{max-width:430px;margin:0 auto;height:100vh;display:flex;flex-direction:column;position:relative}
+.header{background:var(--bg2);border-bottom:1px solid var(--border);padding:14px 16px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.logo{font-size:18px;font-weight:800;letter-spacing:-1px;color:var(--text)}
+.logo span{color:var(--green)}
+.kill-btn{background:#7f1d1d;color:#fca5a5;border:1px solid #dc2626;border-radius:20px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:5px;letter-spacing:0.3px;transition:all 0.2s}
+.kill-btn:hover{background:#991b1b}
+.kill-btn.killed{background:#1f2937;color:#6b7280;border-color:#374151}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0.6}}
+.tabs{background:var(--bg2);border-bottom:1px solid var(--border);display:flex;overflow-x:auto;scrollbar-width:none;flex-shrink:0}
+.tabs::-webkit-scrollbar{display:none}
+.tab{padding:11px 14px;font-size:12px;font-weight:600;color:var(--text2);cursor:pointer;white-space:nowrap;border-bottom:2px solid transparent;transition:all 0.18s;flex-shrink:0;letter-spacing:0.2px}
+.tab.active{color:var(--text);border-bottom-color:var(--green)}
+.scroll-body{flex:1;overflow-y:auto;padding:14px;padding-bottom:84px;scrollbar-width:thin;scrollbar-color:var(--border2) transparent}
+.section{display:none;flex-direction:column;gap:12px}
+.section.active{display:flex}
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:14px}
+.card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.card-title{font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:0.8px}
+.badge{padding:3px 9px;border-radius:20px;font-size:11px;font-weight:700;letter-spacing:0.2px}
+.badge-green{background:#064e3b;color:#34d399}
+.badge-red{background:#7f1d1d;color:#fca5a5}
+.badge-amber{background:#451a03;color:#fbbf24}
+.badge-gray{background:#1f2937;color:#9ca3af}
+.badge-blue{background:#1e3a5f;color:#93c5fd}
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.stat{background:var(--bg3);border-radius:var(--radius2);padding:11px 12px}
+.stat-label{font-size:10px;color:var(--text2);margin-bottom:5px;text-transform:uppercase;letter-spacing:0.4px}
+.stat-value{font-size:20px;font-weight:700;letter-spacing:-0.5px}
+.stat-value.green{color:var(--green)}
+.stat-value.red{color:var(--red)}
+.stat-value.amber{color:var(--amber)}
+.token-icon{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;flex-shrink:0;letter-spacing:-0.5px}
+.signal-bar{display:flex;gap:6px;margin-top:10px}
+.signal{flex:1;padding:7px 4px;border-radius:var(--radius2);text-align:center;font-size:10px;font-weight:700;letter-spacing:0.3px}
+.signal.buy{background:#064e3b;color:#34d399}
+.signal.sell{background:#7f1d1d;color:#fca5a5}
+.signal.neutral{background:var(--bg4);color:var(--text2)}
+.trade-row{border-top:1px solid var(--border);padding:11px 0;display:flex;justify-content:space-between;align-items:flex-start}
+.trade-row:first-child{border-top:none;padding-top:0}
+.trade-sym{font-size:13px;font-weight:700}
+.trade-detail{font-size:11px;color:var(--text2);margin-top:2px;line-height:1.4}
+.trade-pnl{font-size:15px;font-weight:800;text-align:right}
+.trade-time{font-size:10px;color:var(--text2);text-align:right;margin-top:2px}
+.bottom-nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;background:var(--bg2);border-top:1px solid var(--border);display:flex;padding:8px 0 22px;z-index:100}
+.nav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:5px;cursor:pointer;color:var(--text2);transition:color 0.18s;font-size:10px;font-weight:600;letter-spacing:0.2px}
+.nav-item.active{color:var(--green)}
+.nav-item i{font-size:20px}
+.divider{height:1px;background:var(--border);margin:10px 0}
+.settings-row{display:flex;justify-content:space-between;align-items:center;padding:9px 0}
+.settings-label{font-size:13px;font-weight:500}
+.settings-sub{font-size:11px;color:var(--text2);margin-top:2px}
+.toggle{width:46px;height:26px;background:var(--bg4);border-radius:13px;position:relative;cursor:pointer;transition:background 0.2s;border:none;flex-shrink:0}
+.toggle.on{background:var(--green)}
+.toggle::after{content:'';position:absolute;top:3px;left:3px;width:20px;height:20px;background:#fff;border-radius:50%;transition:left 0.2s;box-shadow:0 1px 3px rgba(0,0,0,0.3)}
+.toggle.on::after{left:23px}
+.diary-entry{border-left:3px solid var(--border2);padding:9px 12px;margin-bottom:10px;border-radius:0 6px 6px 0;background:var(--bg3)}
+.diary-entry.win{border-left-color:var(--green)}
+.diary-entry.loss{border-left-color:var(--red)}
+.diary-entry.system{border-left-color:var(--amber)}
+.diary-entry.ai{border-left-color:var(--purple)}
+.diary-entry.trade{border-left-color:var(--blue)}
+.diary-time{font-size:10px;color:var(--text2);margin-bottom:4px;font-weight:600;letter-spacing:0.3px}
+.diary-text{font-size:12px;color:var(--text);line-height:1.55}
+.diary-analysis{font-size:11px;color:var(--amber);margin-top:5px;line-height:1.5;background:#1c1408;padding:6px 8px;border-radius:4px}
+.alert-banner{background:#1c1a05;border:1px solid #713f12;border-radius:var(--radius2);padding:10px 12px;display:flex;align-items:flex-start;gap:10px;font-size:12px;color:#fbbf24;margin-bottom:4px}
+.revert-btn{font-size:11px;color:var(--blue);cursor:pointer;text-decoration:underline;margin-top:5px;display:inline-block;font-weight:600}
+.fund-seg{display:flex;height:10px;border-radius:5px;overflow:hidden;gap:2px}
+.live-dot{width:7px;height:7px;background:var(--green);border-radius:50%;display:inline-block;animation:blink 2s infinite;flex-shrink:0}
+.killed-banner{background:#111827;border:1px solid #374151;border-radius:var(--radius);padding:20px;text-align:center;color:#9ca3af}
+.ai-badge{display:inline-flex;align-items:center;gap:4px;background:#1e1b4b;color:#a5b4fc;padding:3px 8px;border-radius:12px;font-size:10px;font-weight:700;letter-spacing:0.2px}
+input[type=text],input[type=number],input[type=password]{background:var(--bg3);border:1px solid var(--border2);color:var(--text);border-radius:var(--radius2);padding:9px 12px;font-size:13px;width:100%;outline:none;transition:border 0.18s}
+input:focus{border-color:var(--green)}
+.btn{padding:11px 16px;border-radius:var(--radius2);font-size:13px;font-weight:700;cursor:pointer;border:none;transition:all 0.18s;width:100%;margin-top:8px;letter-spacing:0.2px}
+.btn-green{background:var(--green);color:#fff}
+.btn-green:hover{background:#059669}
+.btn-outline{background:transparent;color:var(--text2);border:1px solid var(--border2)}
+.btn-outline:hover{background:var(--bg3)}
+@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+.toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#1f2937;color:#e5e7eb;padding:9px 18px;border-radius:20px;font-size:12px;font-weight:700;z-index:999;white-space:nowrap;border:1px solid #374151;pointer-events:none;transition:opacity 0.3s}
+.metric-row{display:flex;justify-content:space-between;padding:6px 0;font-size:12px}
+.metric-label{color:var(--text2)}
+.metric-val{font-weight:600}
+.empty-state{text-align:center;padding:20px;color:var(--text2);font-size:12px}
+</style>
+</head>
+<body>
+<div class="app">
+
+<div class="header">
+  <div style="display:flex;align-items:center;gap:8px">
+    <div class="logo">Scalp<span>AI</span></div>
+    <div style="font-size:9px;color:var(--text2);line-height:1.3" id="lastUpdated">—</div>
+  </div>
+  <div style="display:flex;gap:8px;align-items:center">
+    <button onclick="manualRefresh()" style="background:var(--bg3);color:var(--text2);border:1px solid var(--border2);border-radius:20px;padding:7px 12px;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:5px" id="refreshBtn">
+      <i class="ti ti-refresh"></i>
+    </button>
+    <button class="kill-btn" id="killBtn" onclick="toggleKill()">
+      <i class="ti ti-bolt"></i>
+      <span id="killLabel">Kill Switch</span>
+    </button>
+  </div>
+</div>
+
+<div class="tabs">
+  <div class="tab active" onclick="showTab('dashboard',this)">Dashboard</div>
+  <div class="tab" onclick="showTab('btc',this)">₿ BTC</div>
+  <div class="tab" onclick="showTab('eth',this)">◆ ETH</div>
+  <div class="tab" onclick="showTab('sol',this)">◎ SOL</div>
+  <div class="tab" onclick="showTab('xrp',this)">✕ XRP</div>
+  <div class="tab" onclick="showTab('doge',this)">Ð DOGE</div>
+  <div class="tab" onclick="showTab('diary',this)">Diary</div>
+  <div class="tab" onclick="showTab('settings',this)">Settings</div>
+</div>
+
+<div class="scroll-body">
+
+<!-- DASHBOARD -->
+<div class="section active" id="s-dashboard">
+  <div class="killed-banner" id="killedBanner" style="display:none">
+    <i class="ti ti-player-stop" style="font-size:28px;display:block;margin-bottom:8px"></i>
+    <strong style="color:#e5e7eb;font-size:15px">Kill Switch Active</strong>
+    <div style="margin-top:6px;font-size:12px">All positions closed at market. No new trades.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">Account Overview</span>
+      <span class="live-dot" id="liveDot"></span>
+    </div>
+    <div class="stat-grid">
+      <div class="stat">
+        <div class="stat-label">Balance</div>
+        <div class="stat-value" id="totalBal">—</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Today P&L</div>
+        <div class="stat-value" id="dayPnl">—</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Equity</div>
+        <div class="stat-value amber" id="accountEquity">—</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Buying Power</div>
+        <div class="stat-value" id="buyingPower">—</div>
+      </div>
+    </div>
+    <div style="margin-top:14px">
+      <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text2);margin-bottom:6px">
+        <span>Fund Allocation</span><span id="deployedPct">—</span>
+      </div>
+      <div class="fund-seg">
+        <div id="segBtc" style="flex:0;background:#b45309;transition:flex 0.5s"></div>
+        <div id="segEth" style="flex:0;background:#3730a3;transition:flex 0.5s"></div>
+        <div id="segSol" style="flex:0;background:#6d28d9;transition:flex 0.5s"></div>
+        <div id="segReserve" style="flex:100;background:var(--bg4);transition:flex 0.5s"></div>
+      </div>
+      <div style="display:flex;gap:14px;margin-top:6px;font-size:10px;color:var(--text2)">
+        <span style="color:#f7931a">■ BTC</span>
+        <span style="color:#627eea">■ ETH</span>
+        <span style="color:#9945ff">■ SOL</span>
+        <span>■ Reserve</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">Open Positions</span>
+      <span class="badge badge-green" id="posCount">—</span>
+    </div>
+    <div id="positionsList"><div class="empty-state">Loading positions...</div></div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">Signal Summary</span>
+      <div style="display:flex;gap:6px;align-items:center">
+        <span id="regimeBadge" style="display:none;font-size:10px;font-weight:700;padding:3px 8px;border-radius:20px"></span>
+        <span class="ai-badge"><i class="ti ti-cpu" style="font-size:12px"></i> Live</span>
+      </div>
+    </div>
+    <div id="signalOverview"><div class="empty-state">Loading signals...</div></div>
+  </div>
+
+  <div class="card">
+    <div class="card-header"><span class="card-title">Performance</span></div>
+    <div class="stat-grid">
+      <div class="stat">
+        <div class="stat-label">Win Rate</div>
+        <div class="stat-value green" id="winRate">—</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Total Trades</div>
+        <div class="stat-value" id="totalTrades">—</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Paper Mode</div>
+        <div class="stat-value amber" id="paperMode">—</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Bot Status</div>
+        <div class="stat-value green" id="botStatus">—</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- BTC PAGE -->
+<div class="section" id="s-btc"><div id="btcContent"><div class="empty-state">Loading BTC data...</div></div></div>
+<!-- ETH PAGE -->
+<div class="section" id="s-eth"><div id="ethContent"><div class="empty-state">Loading ETH data...</div></div></div>
+<!-- SOL PAGE -->
+<div class="section" id="s-sol"><div id="solContent"><div class="empty-state">Loading SOL data...</div></div></div>
+
+<!-- XRP PAGE -->
+<div class="section" id="s-xrp"><div id="xrpContent"><div class="empty-state">Loading XRP data...</div></div></div>
+<!-- DOGE PAGE -->
+<div class="section" id="s-doge"><div id="dogeContent"><div class="empty-state">Loading DOGE data...</div></div></div>
+
+<!-- DIARY -->
+<div class="section" id="s-diary">
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">Trade Diary</span>
+      <span class="badge badge-gray" id="diaryCount">—</span>
+    </div>
+    <div id="diaryEntries"></div>
+  </div>
+</div>
+
+<!-- SETTINGS -->
+<div class="section" id="s-settings">
+  <div class="alert-banner" id="aiUpdateAlert" style="display:none">
+    <i class="ti ti-robot" style="font-size:18px;flex-shrink:0;margin-top:1px"></i>
+    <div>
+      <strong>AI updated strategy</strong><br>
+      <span id="aiUpdateText">Strategy auto-adjusted after loss analysis.</span>
+      <span class="revert-btn" onclick="revertAI()">Revert to original settings</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header"><span class="card-title">Strategy Config</span></div>
+    <div class="settings-row">
+      <div><div class="settings-label">EMA Crossover (9/21)</div><div class="settings-sub">5m + 1m timeframes active</div></div>
+      <button class="toggle on" id="toggle-ema" onclick="toggleSetting('ema',this)"></button>
+    </div>
+    <div class="divider"></div>
+    <div class="settings-row">
+      <div><div class="settings-label">RSI + Bollinger Bands</div><div class="settings-sub">Confirmation layer</div></div>
+      <button class="toggle on" id="toggle-rsi" onclick="toggleSetting('rsi',this)"></button>
+    </div>
+    <div class="divider"></div>
+    <div class="settings-row">
+      <div><div class="settings-label">Kronos AI Signals</div><div class="settings-sub" id="kronosStatusLabel">Not configured — plug in later</div></div>
+      <button class="toggle" id="toggle-kronos" onclick="toggleSetting('kronos',this)"></button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header"><span class="card-title">Risk Management</span></div>
+    <div class="metric-row"><span class="metric-label">Per-token allocation</span><span class="metric-val" style="color:var(--amber)">25% each</span></div>
+    <div class="metric-row"><span class="metric-label">Reserve (untouchable)</span><span class="metric-val">25%</span></div>
+    <div class="metric-row"><span class="metric-label">Max simultaneous trades</span><span class="metric-val">3 (one per token)</span></div>
+    <div class="divider"></div>
+    <div style="font-size:12px;color:var(--text2);margin-bottom:8px;font-weight:600">STOP LOSS %</div>
+    <input type="number" id="stopLoss" value="1.5" step="0.1" min="0.5" max="5">
+    <div style="font-size:12px;color:var(--text2);margin:12px 0 8px;font-weight:600">TAKE PROFIT %</div>
+    <input type="number" id="takeProfit" value="3.0" step="0.1" min="1" max="10">
+    <button class="btn btn-green" onclick="saveSettings()">Save Settings</button>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">Alpaca Connection</span>
+      <span class="badge" id="apiStatusBadge">Checking...</span>
+    </div>
+    <div class="metric-row"><span class="metric-label">Mode</span><span class="metric-val" id="apiModeLabel">—</span></div>
+    <div class="metric-row"><span class="metric-label">Cash Balance</span><span class="metric-val" id="apiCashLabel">—</span></div>
+    <div class="metric-row"><span class="metric-label">Equity</span><span class="metric-val" id="apiEquityLabel">—</span></div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">Kronos Integration</span>
+      <span class="badge badge-gray">Pending</span>
+    </div>
+    <div style="font-size:12px;color:var(--text2);line-height:1.6;padding:4px 0 8px">
+      Once Kronos-mini is running, enter its endpoint to activate AI candlestick forecasting as an additional signal layer.
+    </div>
+    <input type="text" placeholder="http://localhost:8080/predict" id="kronosEndpoint">
+    <button class="btn btn-outline" style="margin-top:8px" onclick="connectKronos()">Connect Kronos Endpoint</button>
+  </div>
+</div>
+
+</div><!-- end settings section added below -->
+
+</div><!-- end scroll-body -->
+
+<div class="bottom-nav">
+  <div class="nav-item active" id="nav-dashboard" onclick="showTabNav('dashboard')">
+    <i class="ti ti-layout-dashboard"></i>Home
+  </div>
+  <div class="nav-item" id="nav-btc" onclick="showTabNav('btc')">
+    <i class="ti ti-currency-bitcoin"></i>BTC
+  </div>
+  <div class="nav-item" id="nav-eth" onclick="showTabNav('eth')">
+    <i class="ti ti-diamond"></i>ETH
+  </div>
+  <div class="nav-item" id="nav-sol" onclick="showTabNav('sol')">
+    <i class="ti ti-sun"></i>SOL
+  </div>
+  <div class="nav-item" id="nav-xrp" onclick="showTabNav('xrp')">
+    <i class="ti ti-currency-ripple"></i>XRP
+  </div>
+  <div class="nav-item" id="nav-doge" onclick="showTabNav('doge')">
+    <i class="ti ti-coin"></i>DOGE
+  </div>
+  <div class="nav-item" id="nav-diary" onclick="showTabNav('diary')">
+    <i class="ti ti-notebook"></i>Diary
+  </div>
+  <div class="nav-item" id="nav-settings" onclick="showTabNav('settings')">
+    <i class="ti ti-settings"></i>Settings
+  </div>
+</div>
+</div>
+
+<script>
+const RAILWAY_URL = 'https://web-production-ff0a4.up.railway.app';
+
+// Token display config
+const TOKEN_CFG = {
+  BTC:  { color:'#f7931a', bg:'#78350f' },
+  ETH:  { color:'#627eea', bg:'#1e1b4b' },
+  SOL:  { color:'#9945ff', bg:'#2e1065' },
+  XRP:  { color:'#00aae4', bg:'#0c2a3d' },
+  DOGE: { color:'#c2a633', bg:'#2d2506' },
+};
+
+// Live data from backend
+let LIVE = {
+  killed: false,
+  account_cash: 0,
+  account_equity: 0,
+  account_buying_power: 0,
+  day_pnl: 0,
+  total_trades: 0,
+  win_rate: 0,
+  paper_mode: true,
+  positions: {},
+  closed_trades: [],
+  diary: [],
+  ai_changes: [],
+  strategy: {},
+};
+
+// ── Navigation ────────────────────────────────────────────────────────────────
+function showTab(id, tabEl) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.getElementById('s-' + id).classList.add('active');
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  tabEl.classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  const navEl = document.getElementById('nav-' + id);
+  if (navEl) navEl.classList.add('active');
+  if (['btc','eth','sol','xrp','doge'].includes(id)) { const S = id.toUpperCase(); renderTokenPage(S); setTimeout(() => loadTradingViewChart(S), 100); }
+  // diary rendered via showTabNav
+  document.querySelector('.scroll-body').scrollTop = 0;
+}
+
+function showTabNav(id) {
+  const tabMap = { dashboard:0, btc:1, eth:2, sol:3, xrp:4, doge:5, diary:6, settings:7 };
+  showTab(id, document.querySelectorAll('.tab')[tabMap[id]]);
+}
+
+// ── Kill Switch ───────────────────────────────────────────────────────────────
+async function toggleKill() {
+  const newKill = !LIVE.killed;
+  try {
+    await fetch(RAILWAY_URL + '/killswitch', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ kill: newKill })
+    });
+  } catch(e) {}
+  LIVE.killed = newKill;
+  applyKillState();
+}
+
+function applyKillState() {
+  const btn = document.getElementById('killBtn');
+  const label = document.getElementById('killLabel');
+  const banner = document.getElementById('killedBanner');
+  if (LIVE.killed) {
+    btn.classList.add('killed'); label.textContent = 'KILLED'; banner.style.display = 'block';
+  } else {
+    btn.classList.remove('killed'); label.textContent = 'Kill Switch'; banner.style.display = 'none';
+  }
+}
+
+// ── Settings ──────────────────────────────────────────────────────────────────
+function toggleSetting(key, el) {
+  el.classList.toggle('on');
+  if (key === 'kronos') {
+    document.getElementById('kronosStatusLabel').textContent =
+      el.classList.contains('on') ? 'Active' : 'Not configured — plug in later';
+  }
+}
+
+async function saveSettings() {
+  const sl = parseFloat(document.getElementById('stopLoss').value);
+  const tp = parseFloat(document.getElementById('takeProfit').value);
+  try {
+    await fetch(RAILWAY_URL + '/settings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ stop_loss_pct: sl, take_profit_pct: tp })
+    });
+    showToast('Settings saved ✓');
+  } catch(e) { showToast('Save failed'); }
+}
+
+async function revertAI() {
+  try {
+    await fetch(RAILWAY_URL + '/revert_ai', { method: 'POST' });
+    document.getElementById('aiUpdateAlert').style.display = 'none';
+    showToast('Strategy reverted ✓');
+  } catch(e) { showToast('Revert failed'); }
+}
+
+async function connectKronos() {
+  const ep = document.getElementById('kronosEndpoint').value;
+  if (!ep) { showToast('Enter Kronos endpoint first'); return; }
+  try {
+    await fetch(RAILWAY_URL + '/settings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ kronos_endpoint: ep, enabled_kronos: true })
+    });
+    const host = ep.replace('https://','').replace('http://','').split('/')[0];
+    document.getElementById('kronosStatusLabel').textContent = 'Active — ' + host;
+    document.getElementById('toggle-kronos').classList.add('on');
+    showToast('Kronos connected ✓');
+  } catch(e) { showToast('Connection failed'); }
+}
+
+// ── Rendering ─────────────────────────────────────────────────────────────────
+function fmt$(n) {
+  if (!n && n !== 0) return '—';
+  return '$' + Number(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function renderDashboard() {
+  // Balance stats from live Alpaca account
+  document.getElementById('totalBal').textContent = fmt$(LIVE.account_cash);
+  document.getElementById('accountEquity').textContent = fmt$(LIVE.account_equity);
+  document.getElementById('buyingPower').textContent = fmt$(LIVE.account_buying_power);
+
+  // P&L - calculate from Alpaca history for today only
+  const pnlEl = document.getElementById('dayPnl');
+  // Use local date for comparison
+  const todayLocal = new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD in local time
+  const pnl = alpacaHistory
+    .filter(t => {
+      if (!t.close_time) return false;
+      // close_time is UTC "YYYY-MM-DD HH:MM"
+      const tradeDate = new Date(t.close_time.replace(' ', 'T') + 'Z');
+      return tradeDate.toLocaleDateString('en-CA') === todayLocal;
+    })
+    .reduce((a, t) => a + t.pnl, 0);
+  pnlEl.textContent = alpacaHistory.length === 0 ? '—' : (pnl >= 0 ? '+' : '') + fmt$(pnl);
+  pnlEl.className = 'stat-value ' + (pnl >= 0 ? 'green' : 'red');
+
+  // Performance
+  document.getElementById('winRate').textContent = LIVE.total_trades > 0 ? LIVE.win_rate + '%' : '—';
+  document.getElementById('totalTrades').textContent = LIVE.total_trades || '0';
+  document.getElementById('paperMode').textContent = LIVE.paper_mode ? 'PAPER' : 'LIVE';
+  document.getElementById('botStatus').textContent = LIVE.killed ? 'PAUSED' : 'RUNNING';
+  document.getElementById('botStatus').className = 'stat-value ' + (LIVE.killed ? 'amber' : 'green');
+
+  // Settings tab connection status
+  document.getElementById('apiStatusBadge').textContent = LIVE.paper_mode ? 'Paper Mode' : 'Live Mode';
+  document.getElementById('apiStatusBadge').className = 'badge ' + (LIVE.paper_mode ? 'badge-amber' : 'badge-green');
+  document.getElementById('apiModeLabel').textContent = LIVE.paper_mode ? 'Paper Trading' : 'Live Trading';
+  document.getElementById('apiCashLabel').textContent = fmt$(LIVE.account_cash);
+  document.getElementById('apiEquityLabel').textContent = fmt$(LIVE.account_equity);
+
+  // Fund allocation bar
+  const equity = LIVE.account_equity || 1;
+  const posVals = Object.values(LIVE.positions);
+  const deployed = posVals.reduce((a, p) => a + (p.entry * p.qty), 0);
+  const deployedPct = Math.min(100, Math.round(deployed / equity * 100));
+  const perSym = deployedPct / Math.max(posVals.length, 1);
+  const keys = Object.keys(LIVE.positions);
+  document.getElementById('segBtc').style.flex = keys.some(k => k.startsWith('BTC')) ? perSym : 0;
+  document.getElementById('segEth').style.flex = keys.some(k => k.startsWith('ETH')) ? perSym : 0;
+  document.getElementById('segSol').style.flex = keys.some(k => k.startsWith('SOL')) ? perSym : 0;
+  document.getElementById('segReserve').style.flex = Math.max(0, 100 - deployedPct);
+  document.getElementById('deployedPct').textContent = deployedPct + '% deployed';
+
+  renderPositions();
+  renderSignals();
+
+  // Pos count badge
+  const posCount = Object.keys(LIVE.positions).length;
+  const posCountEl = document.getElementById('posCount');
+  posCountEl.textContent = posCount + ' Active';
+  posCountEl.className = 'badge ' + (posCount > 0 ? 'badge-green' : 'badge-gray');
+
+  // AI alert
+  if (LIVE.ai_changes && LIVE.ai_changes.length > 0) {
+    const alert = document.getElementById('aiUpdateAlert');
+    alert.style.display = 'flex';
+    const last = LIVE.ai_changes[LIVE.ai_changes.length - 1];
+    document.getElementById('aiUpdateText').textContent = last.changes || 'Strategy auto-adjusted.';
+  }
+
+  // Strategy inputs
+  if (LIVE.strategy) {
+    if (LIVE.strategy.stop_loss_pct) document.getElementById('stopLoss').value = LIVE.strategy.stop_loss_pct;
+    if (LIVE.strategy.take_profit_pct) document.getElementById('takeProfit').value = LIVE.strategy.take_profit_pct;
+    if (LIVE.strategy.enabled_ema === false) document.getElementById('toggle-ema').classList.remove('on');
+    if (LIVE.strategy.enabled_rsi_bb === false) document.getElementById('toggle-rsi').classList.remove('on');
+    if (LIVE.strategy.enabled_kronos === true) document.getElementById('toggle-kronos').classList.add('on');
+  }
+}
+
+function renderPositions() {
+  const el = document.getElementById('positionsList');
+  if (LIVE.killed) {
+    el.innerHTML = '<div class="empty-state">All positions paused by kill switch</div>';
+    return;
+  }
+  const positions = Object.entries(LIVE.positions);
+  if (positions.length === 0) {
+    el.innerHTML = '<div class="empty-state">No open positions — scanning for entries</div>';
+    return;
+  }
+  el.innerHTML = positions.map(([symKey, pos]) => {
+    const sym = symKey.replace('USD','');
+    const cfg = TOKEN_CFG[sym] || { color:'#fff', bg:'#333' };
+    const entry = pos.entry || 0;
+    const qty = pos.qty || 0;
+    const current = pos.current_price || entry;
+    const pnl = pos.unrealized_pnl !== undefined ? pos.unrealized_pnl : (current - entry) * qty;
+    const pct = pos.unrealized_pct !== undefined ? pos.unrealized_pct : ((current - entry) / entry * 100);
+    const pos_ = pnl >= 0;
+    return `<div class="trade-row">
+      <div style="display:flex;align-items:center;gap:9px">
+        <div class="token-icon" style="background:${cfg.bg};color:${cfg.color}">${sym}</div>
+        <div>
+          <div class="trade-sym">${sym}/USD</div>
+          <div class="trade-detail">Entry ${fmt$(entry)} · since ${utcToLocal(pos.open_time||'—')}<br>Qty: ${qty} · Now: ${fmt$(current)}</div>
+        </div>
+      </div>
+      <div>
+        <div class="trade-pnl ${pos_?'green':'red'}">${pos_?'+':''}${fmt$(pnl)}</div>
+        <div class="trade-time" style="color:${pos_?'var(--green)':'var(--red)'}">${pos_?'+':''}${pct.toFixed(2)}%</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderSignals() {
+  const el = document.getElementById('signalOverview');
+  const positions = LIVE.positions;
+  const syms = ['BTC','ETH','SOL','XRP','DOGE'];
+  el.innerHTML = syms.map(sym => {
+    const cfg = TOKEN_CFG[sym];
+    const symKey = sym + 'USD';
+    const pos = positions[symKey];
+    const hasPos = !!pos;
+    const current = pos?.current_price || 0;
+    const pct = pos?.unrealized_pct || 0;
+    const signal = hasPos ? (pct >= 0 ? 'IN PROFIT' : 'IN LOSS') : 'WATCHING';
+    const cls = hasPos ? (pct >= 0 ? 'badge-green' : 'badge-red') : 'badge-gray';
+    return `<div class="trade-row" style="align-items:center">
+      <div style="display:flex;align-items:center;gap:9px">
+        <div class="token-icon" style="background:${cfg.bg};color:${cfg.color};width:28px;height:28px;font-size:10px">${sym}</div>
+        <div>
+          <div class="trade-sym" style="font-size:13px">${sym}/USD${current ? ' — ' + fmt$(current) : ''}</div>
+          <div class="trade-detail">${hasPos ? 'Open position · ' + (pct>=0?'+':'') + pct.toFixed(2) + '%' : 'Monitoring for entry signal'}</div>
+        </div>
+      </div>
+      <span class="badge ${cls}">${signal}</span>
+    </div>`;
+  }).join('');
+}
+
+function updateTokenPageData(sym) {
+  const cfg = TOKEN_CFG[sym];
+  const symKey = sym + 'USD';
+  const pos = LIVE.positions[symKey];
+  const closed = LIVE.closed_trades.filter(t => t.symbol && t.symbol.replace('/USD','') === sym);
+  const wins = closed.filter(c => c.win).length;
+  const entry = pos?.entry || 0;
+  const qty = pos?.qty || 0;
+  const current = pos?.current_price || entry;
+  const pnl = pos?.unrealized_pnl !== undefined ? pos.unrealized_pnl : (current - entry) * qty;
+  const pct = pos?.unrealized_pct !== undefined ? pos.unrealized_pct : ((entry ? (current - entry) / entry * 100 : 0));
+  const inProfit = pnl >= 0;
+  // Update price
+  const priceEl = document.querySelector('#' + sym.toLowerCase() + 'Content .token-price');
+  if (priceEl) priceEl.textContent = current ? fmt : 'Loading price...';
+  // Update position card
+  const posCard = document.getElementById('pos-card-' + sym.toLowerCase());
+  if (posCard) {
+    posCard.innerHTML = !pos ? '<div class="empty-state">No open position — bot is scanning for entry signal</div>' :
+      `<div class="stat-grid">
+        <div class="stat"><div class="stat-label">Entry</div><div class="stat-value" style="font-size:15px">${fmt$(entry)}</div></div>
+        <div class="stat"><div class="stat-label">Current</div><div class="stat-value" style="font-size:15px">${fmt$(current)}</div></div>
+        <div class="stat"><div class="stat-label">Unrealised P&L</div><div class="stat-value ${inProfit?'green':'red'}">${inProfit?'+':''}${fmt$(pnl)}</div></div>
+        <div class="stat"><div class="stat-label">Return</div><div class="stat-value ${inProfit?'green':'red'}">${inProfit?'+':''}${pct.toFixed(2)}%</div></div>
+      </div>
+      <div class="metric-row" style="margin-top:10px"><span class="metric-label">Quantity</span><span class="metric-val">${qty} ${sym}</span></div>
+      <div class="metric-row"><span class="metric-label">Open Since</span><span class="metric-val">${utcToLocal(pos.open_time||'—')}</span></div>`;
+  }
+}
+
+function renderTokenPage(sym) {
+  // If chart already loaded for this sym, just update position/history data without wiping the chart
+  if (tvWidgets[sym]) {
+    updateTokenPageData(sym);
+    return;
+  }
+  const el = document.getElementById(sym.toLowerCase() + 'Content');
+  const cfg = TOKEN_CFG[sym];
+  const symKey = sym + 'USD';
+  const pos = LIVE.positions[symKey];
+  const closed = LIVE.closed_trades.filter(t => t.symbol && t.symbol.replace('/USD','') === sym);
+  const wins = closed.filter(c => c.win).length;
+
+  const entry = pos?.entry || 0;
+  const qty = pos?.qty || 0;
+  const current = pos?.current_price || entry;
+  const pnl = pos?.unrealized_pnl !== undefined ? pos.unrealized_pnl : (current - entry) * qty;
+  const pct = pos?.unrealized_pct !== undefined ? pos.unrealized_pct : ((entry ? (current - entry) / entry * 100 : 0));
+  const inProfit = pnl >= 0;
+
+  el.innerHTML = `
+  <div class="card" style="border-top:3px solid ${cfg.color}">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+      <div class="token-icon" style="background:${cfg.bg};color:${cfg.color};width:40px;height:40px;font-size:12px">${sym}</div>
+      <div style="flex:1">
+        <div style="font-size:16px;font-weight:800">${sym}/USD</div>
+        <div style="font-size:13px;color:var(--text2)">${current ? fmt$(current) : 'Loading price...'}</div>
+      </div>
+      <span class="badge ${pos ? (inProfit?'badge-green':'badge-red') : 'badge-gray'}">${pos ? (inProfit?'IN PROFIT':'IN LOSS') : 'NO POSITION'}</span>
+    </div>
+  </div>
+
+  <div class="card" style="padding:0;overflow:hidden">
+    <div class="card-header" style="padding:10px 14px 8px">
+      <span class="card-title">Live Chart</span>
+      <div style="display:flex;gap:4px">
+        <button onclick="setTVInterval('${sym}','5')" id="tv-5-${sym.toLowerCase()}" style="background:var(--green);color:#fff;border:1px solid var(--green);border-radius:4px;padding:3px 8px;font-size:10px;font-weight:700;cursor:pointer">5m</button>
+        <button onclick="setTVInterval('${sym}','15')" id="tv-15-${sym.toLowerCase()}" style="background:var(--bg4);color:var(--text2);border:1px solid var(--border2);border-radius:4px;padding:3px 8px;font-size:10px;font-weight:700;cursor:pointer">15m</button>
+        <button onclick="setTVInterval('${sym}','60')" id="tv-60-${sym.toLowerCase()}" style="background:var(--bg4);color:var(--text2);border:1px solid var(--border2);border-radius:4px;padding:3px 8px;font-size:10px;font-weight:700;cursor:pointer">1H</button>
+      </div>
+    </div>
+    <div id="tv-container-${sym.toLowerCase()}" style="height:350px;width:100%"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">Current Position</span>
+      <span class="badge ${LIVE.killed?'badge-gray':pos?(inProfit?'badge-green':'badge-red'):'badge-gray'}">${LIVE.killed?'BOT PAUSED':pos?(inProfit?'IN PROFIT':'IN LOSS'):'WATCHING'}</span>
+    </div>
+    ${!pos ? '<div class="empty-state">No open position — bot is scanning for entry signal</div>' :
+      `<div class="stat-grid">
+        <div class="stat"><div class="stat-label">Entry</div><div class="stat-value" style="font-size:15px">${fmt$(entry)}</div></div>
+        <div class="stat"><div class="stat-label">Current</div><div class="stat-value" style="font-size:15px">${fmt$(current)}</div></div>
+        <div class="stat"><div class="stat-label">Unrealised P&L</div><div class="stat-value ${inProfit?'green':'red'}">${inProfit?'+':''}${fmt$(pnl)}</div></div>
+        <div class="stat"><div class="stat-label">Return</div><div class="stat-value ${inProfit?'green':'red'}">${inProfit?'+':''}${pct.toFixed(2)}%</div></div>
+      </div>
+      <div class="metric-row" style="margin-top:10px"><span class="metric-label">Quantity</span><span class="metric-val">${qty} ${sym}</span></div>
+      <div class="metric-row"><span class="metric-label">Open Since</span><span class="metric-val">${utcToLocal(pos.open_time||'—')}</span></div>`
+    }
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">Trade History</span>
+      <span class="badge badge-gray">${closed.length} trades · ${wins}W/${closed.length-wins}L</span>
+    </div>
+    ${closed.length === 0 ?
+      `<div class="empty-state">No closed ${sym} trades yet</div>` :
+      [...closed].reverse().map(c => `
+      <div class="trade-row">
+        <div style="flex:1;padding-right:10px">
+          <div class="trade-sym" style="font-size:12px;color:${c.win?'var(--green)':'var(--red)'}">${c.win?'WIN ✓':'LOSS ✗'} · ${c.time||'—'}</div>
+          <div class="trade-detail" style="margin-top:3px">${fmt$(c.entry)} → ${fmt$(c.exit)}<br>Signal: ${c.signal||'—'}</div>
+        </div>
+        <div style="text-align:right;flex-shrink:0">
+          <div class="trade-pnl ${c.win?'green':'red'}">${c.win?'+':''}${fmt$(c.pnl)}</div>
+          <div class="trade-time">${(c.pct||0)>=0?'+':''}${(c.pct||0).toFixed(2)}%</div>
+        </div>
+      </div>`).join('')}
+  </div>`;
+}
+
+function utcToLocal(timeStr) {
+  if (!timeStr || timeStr === '—' || timeStr === 'synced') return '—';
+  try {
+    const parts = timeStr.split(':');
+    if (parts.length < 2) return timeStr;
+    const [h, m] = parts.map(Number);
+    if (isNaN(h) || isNaN(m)) return timeStr;
+    const now = new Date();
+    const utc = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), h, m));
+    return utc.toLocaleTimeString([], {hour: 'numeric', minute: '2-digit', hour12: true});
+  } catch(e) { return timeStr; }
+}
+
+let alpacaHistory = [];
+
+async function loadAlpacaHistory() {
+  try {
+    const r = await fetch(RAILWAY_URL + '/history', {signal: AbortSignal.timeout(8000)});
+    const d = await r.json();
+    alpacaHistory = d.trades || [];
+    renderDiary();
+  } catch(e) {
+    renderDiary();
+  }
+}
+
+function renderDiary() {
+  const el = document.getElementById('diaryEntries');
+  if (!el) return;
+  const diaryEntries = [...(LIVE.diary || [])].reverse();
+  let historyHtml = '';
+  if (alpacaHistory.length > 0) {
+    const totalPnl = alpacaHistory.reduce((a, t) => a + (t.win ? t.pnl : -Math.abs(t.pnl)), 0);
+    const wins = alpacaHistory.filter(t => t.win).length;
+    const winRate = Math.round(wins / alpacaHistory.length * 100);
+    historyHtml = `<div style="margin-bottom:12px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <div style="font-size:10px;color:var(--text2);font-weight:700;text-transform:uppercase;letter-spacing:0.8px">Alpaca Trade History</div>
+        <div style="font-size:11px;font-weight:700;color:${totalPnl>=0?'var(--green)':'var(--red)'}">
+          ${totalPnl>=0?'+$':'-$'}${Math.abs(totalPnl).toFixed(2)} · ${winRate}% WR
+        </div>
+      </div>
+      ${alpacaHistory.map(t => `
+        <div class="diary-entry ${t.win ? 'win' : 'loss'}">
+          <div class="diary-time">${t.close_time} · ${t.symbol}</div>
+          <div class="diary-text" style="display:flex;justify-content:space-between;align-items:center">
+            <span>${t.win ? '✓ WIN' : '✗ LOSS'} | Entry $${t.entry.toLocaleString(undefined,{maximumFractionDigits:2})} → $${t.exit.toLocaleString(undefined,{maximumFractionDigits:2})}</span>
+            <span style="font-weight:700;color:${t.win?'var(--green)':'var(--red)'};margin-left:8px">${t.pnl>=0?'+$':'-$'}${Math.abs(t.pnl).toFixed(2)}</span>
+          </div>
+        </div>`).join('')}
+    </div>`;
+  }
+
+  const count = diaryEntries.length + alpacaHistory.length;
+  const countEl = document.getElementById('diaryCount');
+  if (countEl) countEl.textContent = count + ' entries';
+  
+  if (diaryEntries.length === 0 && alpacaHistory.length === 0) {
+    el.innerHTML = '<div class="empty-state">Loading trade history...</div>';
+    return;
+  }
+  
+  const botHtml = diaryEntries.length > 0 ? `<div style="margin-top:12px">
+    <div style="font-size:10px;color:var(--text2);font-weight:700;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:8px">Bot Diary</div>
+    ${diaryEntries.map(d => `
+      <div class="diary-entry ${d.type||'trade'}">
+        <div class="diary-time">${utcToLocal(d.time||'—')} · ${d.symbol||'SYSTEM'}</div>
+        <div class="diary-text">${d.text||''}</div>
+      </div>`).join('')}
+  </div>` : '';
+
+  el.innerHTML = (historyHtml + botHtml) || '<div class="empty-state">No trades yet</div>';
+}
+
+
+// TradingView symbol map
+const TV_SYMBOLS = {
+  BTC:  'BITSTAMP:BTCUSD',
+  ETH:  'BITSTAMP:ETHUSD',
+  SOL:  'COINBASE:SOLUSD',
+  XRP:  'BITSTAMP:XRPUSD',
+  DOGE: 'BINANCE:DOGEUSDT',
+};
+
+const tvIntervals = { BTC:'5', ETH:'5', SOL:'5', XRP:'5', DOGE:'5' };
+const tvWidgets = {};
+
+function setTVInterval(sym, interval) {
+  tvIntervals[sym] = interval;
+  // Update button styles
+  ['5','15','60'].forEach(i => {
+    const btn = document.getElementById('tv-' + i + '-' + sym.toLowerCase());
+    if (btn) {
+      btn.style.background = i === interval ? 'var(--green)' : 'var(--bg4)';
+      btn.style.color = i === interval ? '#fff' : 'var(--text2)';
+      btn.style.borderColor = i === interval ? 'var(--green)' : 'var(--border2)';
+    }
+  });
+  // Reload chart with new interval
+  loadTradingViewChart(sym);
+}
+
+function loadTradingViewChart(sym) {
+  const container = document.getElementById('tv-container-' + sym.toLowerCase());
+  if (!container) return;
+  container.innerHTML = '';
+  const tvSym = TV_SYMBOLS[sym] || ('BITSTAMP:' + sym + 'USD');
+  const interval = tvIntervals[sym] || '5';
+  const script = document.createElement('script');
+  script.src = 'https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js';
+  script.async = true;
+  script.innerHTML = JSON.stringify({
+    autosize: true,
+    symbol: tvSym,
+    interval: interval,
+    timezone: 'America/Los_Angeles',
+    theme: 'dark',
+    style: '1',
+    locale: 'en',
+    hide_top_toolbar: false,
+    hide_legend: false,
+    save_image: false,
+    studies: ['MAExp@tv-basicstudies'],
+    container_id: 'tv-container-' + sym.toLowerCase(),
+  });
+  container.appendChild(script);
+  tvWidgets[sym] = true;
+}
+
+// ── Real-time price feed ──────────────────────────────────────────────────────
+async function fetchLivePrices() {
+  try {
+    const r = await fetch(RAILWAY_URL + '/prices', {signal: AbortSignal.timeout(3000)});
+    const d = await r.json();
+    if (d.prices) {
+      Object.entries(d.prices).forEach(([sym, price]) => {
+        const symKey = sym.replace('/','');
+        if (LIVE.positions[symKey]) {
+          const pos = LIVE.positions[symKey];
+          pos.current_price = price;
+          pos.unrealized_pnl = (price - pos.entry) * pos.qty;
+          pos.unrealized_pct = (price - pos.entry) / pos.entry * 100;
+        }
+        // Update price display on token pages
+        const sym3 = sym.replace('/USD','');
+        const priceEl = document.querySelector('#' + sym3.toLowerCase() + 'Content .token-price');
+        if (priceEl) priceEl.textContent = '$' + price.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2});
+      });
+      renderPositions();
+      renderSignals();
+    }
+  } catch(e) {}
+}
+setInterval(fetchLivePrices, 2000);
+setTimeout(fetchLivePrices, 1000);
+
+// ── Live fetch ────────────────────────────────────────────────────────────────
+function renderStrategyComparison(data) {
+  const card = document.getElementById('strategyCompare');
+  if (!card) return;
+  const sb = data.strategy_b;
+  if (!sb) return;
+  card.style.display = 'block';
+
+  // Strategy A stats
+  const aWr  = data.win_rate || 0;
+  const aPnl = data.day_pnl || 0;
+  const aT   = data.total_trades || 0;
+  document.getElementById('sa-pnl').textContent    = (aPnl >= 0 ? '+' : '') + fmt$(aPnl);
+  document.getElementById('sa-pnl').style.color    = aPnl >= 0 ? 'var(--green)' : 'var(--red)';
+  document.getElementById('sa-wr').textContent     = 'Win Rate: ' + aWr + '%';
+  document.getElementById('sa-trades').textContent = 'Trades: ' + aT;
+
+  // Strategy B stats
+  const bPnl = sb.day_pnl || 0;
+  const bWr  = sb.win_rate || 0;
+  const bT   = sb.total_trades || 0;
+  document.getElementById('sb-pnl').textContent    = (bPnl >= 0 ? '+' : '') + fmt$(bPnl);
+  document.getElementById('sb-pnl').style.color    = bPnl >= 0 ? 'var(--green)' : 'var(--red)';
+  document.getElementById('sb-wr').textContent     = 'Win Rate: ' + bWr + '%';
+  document.getElementById('sb-trades').textContent = 'Trades: ' + bT;
+
+  // Strategy B open positions
+  const bPos = sb.positions || {};
+  const bPosKeys = Object.keys(bPos);
+  const posEl = document.getElementById('sb-positions');
+  if (posEl && bPosKeys.length > 0) {
+    posEl.innerHTML = '<div style="font-size:10px;font-weight:700;color:var(--text2);margin-bottom:4px">B OPEN POSITIONS</div>' +
+      bPosKeys.map(k => {
+        const p = bPos[k];
+        return '<div style="font-size:12px;display:flex;justify-content:space-between">' +
+          '<span>' + (p.symbol||k) + '</span>' +
+          '<span>Entry ' + fmt$(p.entry) + '</span></div>';
+      }).join('');
+  } else if (posEl) {
+    posEl.innerHTML = '';
+  }
+
+  // Show 1H trend badges
+  const trends = data.trend_1h_cache || {};
+  Object.entries(trends).forEach(([sym, trend]) => {
+    const el = document.getElementById('trend-1h-' + sym.toLowerCase());
+    if (el) {
+      el.textContent = trend;
+      el.style.color = trend === 'BULL' ? 'var(--green)' : trend === 'BEAR' ? 'var(--red)' : 'var(--text2)';
+    }
+  });
+}
+
+function manualRefresh() {
+  const btn = document.getElementById('refreshBtn');
+  const icon = btn.querySelector('i');
+  icon.style.animation = 'spin 0.6s linear';
+  setTimeout(() => icon.style.animation = '', 700);
+  fetchLiveStatus();
+  // Also reload chart if on token page
+  const active = document.querySelector('.section.active');
+  if (active) {
+    const id = active.id;
+    const sym = id === 's-btc' ? 'BTC' : id === 's-eth' ? 'ETH' : id === 's-sol' ? 'SOL' : null;
+    if (sym) {
+      if (lwCharts[sym]) { try { lwCharts[sym].remove(); } catch(e) {} delete lwCharts[sym]; }
+      loadTradingViewChart(sym);
+    }
+  }
+}
+
+async function fetchLiveStatus() {
+  try {
+    const res = await fetch(RAILWAY_URL + '/status', { signal: AbortSignal.timeout(6000) });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const text = await res.text();
+    const safeText = text.replace(/:NaN/g, ':0').replace(/:Infinity/g, ':0').replace(/:-Infinity/g, ':0');
+    const data = JSON.parse(safeText);
+
+    // Update live state with real Alpaca data
+    LIVE.killed              = data.killed || false;
+    LIVE.paper_mode          = data.paper_mode !== undefined ? data.paper_mode : true;
+    LIVE.day_pnl             = data.day_pnl || 0;
+    LIVE.total_trades        = data.total_trades || 0;
+    LIVE.win_rate            = data.win_rate || 0;
+    LIVE.positions           = data.positions || {};
+    LIVE.closed_trades       = data.closed_trades || [];
+    LIVE.diary               = data.diary || [];
+    LIVE.ai_changes          = data.ai_changes || [];
+    LIVE.strategy            = data.strategy || {};
+
+    // ✅ Real Alpaca account data
+    LIVE.account_cash         = data.account_cash || 0;
+    LIVE.account_equity       = data.account_equity || 0;
+    LIVE.account_buying_power = data.account_buying_power || 0;
+
+    // Connection indicator
+    document.getElementById('liveDot').style.background = 'var(--green)';
+  const regimeBadge = document.getElementById('regimeBadge');
+  if (regimeBadge) {
+    const regime = data.market_regime || 'UNKNOWN';
+    regimeBadge.style.display = 'inline';
+    if (regime === 'BULL') {
+      regimeBadge.textContent = '🐂 BULL';
+      regimeBadge.style.background = 'var(--green)';
+      regimeBadge.style.color = '#fff';
+    } else if (regime === 'BEAR') {
+      regimeBadge.textContent = '🐻 BEAR';
+      regimeBadge.style.background = 'var(--red)';
+      regimeBadge.style.color = '#fff';
+    } else {
+      regimeBadge.textContent = '⏳ Detecting...';
+      regimeBadge.style.background = 'var(--bg4)';
+      regimeBadge.style.color = 'var(--text2)';
+    }
+  }
+    const now = new Date();
+    const timeStr = now.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit', second: '2-digit'});
+    const el = document.getElementById('lastUpdated');
+    if (el) el.textContent = 'Updated ' + timeStr;
+
+    applyKillState();
+    renderDashboard();
+  renderStrategyComparison(data);
+
+    // Re-render active token page if open
+    const active = document.querySelector('.section.active');
+    if (active) {
+      const id = active.id;
+      // For token pages, only update data without re-rendering (preserves chart)
+      if (id === 's-btc') updateTokenPageData('BTC');
+      else if (id === 's-eth') updateTokenPageData('ETH');
+      else if (id === 's-sol') updateTokenPageData('SOL');
+      else if (id === 's-diary') { renderDiary(); loadAlpacaHistory(); } else if (id === 's-settings') { loadToggles(); loadDiaryDates(); }
+      else renderDashboard();
+    }
+
+  } catch(e) {
+    document.getElementById('liveDot').style.background = 'var(--red)';
+    console.warn('Backend fetch failed:', e.message);
+  }
+}
+
+// ── Asset toggles ────────────────────────────────────────────────────────────
+async function toggleSymbol(symbol, btn) {
+  const enabled = !btn.classList.contains('on');
+  try {
+    await fetch(RAILWAY_URL + '/toggle', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({symbol, enabled})
+    });
+    btn.classList.toggle('on');
+    showToast(symbol + (enabled ? ' trading ON' : ' trading OFF'));
+  } catch(e) { showToast('Toggle failed'); }
+}
+
+function injectSettingsCards() {
+  var s = document.getElementById("s-settings");
+  if (!s || document.getElementById("assetToggles")) return;
+
+  var toggleCard = document.createElement("div");
+  toggleCard.className = "card";
+  toggleCard.innerHTML = "<div class=\"card-header\"><span class=\"card-title\">Asset Trading Toggles</span></div>" +
+    "<div id=\"assetToggles\">" +
+    "<div class=\"settings-row\"><div><div class=\"settings-label\">BTC/USD</div></div><button class=\"toggle on\" id=\"toggle-sym-BTCUSD\" onclick=\"toggleSymbol('BTC/USD',this)\"></button></div>" +
+    "<div class=\"divider\"></div>" +
+    "<div class=\"settings-row\"><div><div class=\"settings-label\">ETH/USD</div></div><button class=\"toggle on\" id=\"toggle-sym-ETHUSD\" onclick=\"toggleSymbol('ETH/USD',this)\"></button></div>" +
+    "<div class=\"divider\"></div>" +
+    "<div class=\"settings-row\"><div><div class=\"settings-label\">SOL/USD</div></div><button class=\"toggle on\" id=\"toggle-sym-SOLUSD\" onclick=\"toggleSymbol('SOL/USD',this)\"></button></div>" +
+    "<div class=\"divider\"></div>" +
+    "<div class=\"settings-row\"><div><div class=\"settings-label\">XRP/USD</div></div><button class=\"toggle on\" id=\"toggle-sym-XRPUSD\" onclick=\"toggleSymbol('XRP/USD',this)\"></button></div>" +
+    "<div class=\"divider\"></div>" +
+    "<div class=\"settings-row\"><div><div class=\"settings-label\">DOGE/USD</div></div><button class=\"toggle on\" id=\"toggle-sym-DOGEUSD\" onclick=\"toggleSymbol('DOGE/USD',this)\"></button></div>" +
+    "</div>";
+  s.appendChild(toggleCard);
+
+  var btCard = document.createElement("div");
+  btCard.className = "card";
+  btCard.innerHTML = "<div class=\"card-header\"><span class=\"card-title\">Backtest Strategy</span></div>" +
+    "<div style=\"font-size:12px;color:var(--text2);margin-bottom:8px\">Test strategy against historical data</div>" +
+    "<select id=\"btSymbol\" style=\"width:100%;background:var(--bg3);border:1px solid var(--border2);color:var(--text);border-radius:var(--radius2);padding:9px 12px;font-size:13px;margin-bottom:8px\">" +
+    "<option>BTC/USD</option><option>ETH/USD</option><option>SOL/USD</option><option>XRP/USD</option><option>DOGE/USD</option></select>" +
+    "<div style=\"display:flex;gap:8px;margin-bottom:8px\">" +
+    "<div style=\"flex:1\"><div style=\"font-size:11px;color:var(--text2);margin-bottom:4px\">Start Date</div><input type=\"date\" id=\"btStart\" value=\"2026-02-01\" style=\"width:100%\"></div>" +
+    "<div style=\"flex:1\"><div style=\"font-size:11px;color:var(--text2);margin-bottom:4px\">End Date</div><input type=\"date\" id=\"btEnd\" value=\"2026-02-28\" style=\"width:100%\"></div>" +
+    "</div>" +
+    "<button class=\"btn btn-green\" onclick=\"runBacktest()\" id=\"btBtn\">Run Backtest</button>" +
+    "<div id=\"btResults\" style=\"margin-top:12px\"></div>";
+  s.appendChild(btCard);
+
+  var diaryCard = document.createElement("div");
+  diaryCard.className = "card";
+  diaryCard.innerHTML = "<div class=\"card-header\"><span class=\"card-title\">Daily Diary Archive</span></div>" +
+    "<div id=\"diaryDates\"><div class=\"empty-state\">Loading...</div></div>";
+  s.appendChild(diaryCard);
+}
+
+async function loadToggles() {
+  injectSettingsCards();
+  try {
+    const r = await fetch(RAILWAY_URL + '/toggles');
+    const d = await r.json();
+    Object.entries(d.toggles || {}).forEach(([sym, enabled]) => {
+      const btn = document.getElementById('toggle-sym-' + sym.replace('/',''));
+      if (btn) btn.classList.toggle('on', enabled);
+    });
+  } catch(e) {}
+}
+
+// ── Backtest ──────────────────────────────────────────────────────────────────
+async function runBacktest() {
+  const btn = document.getElementById('btBtn');
+  const results = document.getElementById('btResults');
+  btn.textContent = 'Running...';
+  btn.disabled = true;
+  results.innerHTML = '<div class="empty-state">Running backtest, please wait...</div>';
+  try {
+    const r = await fetch(RAILWAY_URL + '/backtest', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        symbol: document.getElementById('btSymbol').value,
+        start:  document.getElementById('btStart').value,
+        end:    document.getElementById('btEnd').value,
+        stop_loss:   1.5,
+        take_profit: 3.0,
+      }),
+      signal: AbortSignal.timeout(60000)
+    });
+    const d = await r.json();
+    if (d.error) {
+      results.innerHTML = '<div class="empty-state" style="color:var(--red)">' + d.error + '</div>';
+      return;
+    }
+    const pnlColor = d.total_pnl >= 0 ? 'var(--green)' : 'var(--red)';
+    results.innerHTML = `
+      <div style="background:var(--bg3);border-radius:var(--radius2);padding:12px;margin-bottom:10px">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <div><div style="font-size:10px;color:var(--text2)">TOTAL P&L</div>
+            <div style="font-size:18px;font-weight:700;color:${pnlColor}">${d.total_pnl>=0?'+':''}${fmt$(d.total_pnl)}</div></div>
+          <div><div style="font-size:10px;color:var(--text2)">WIN RATE</div>
+            <div style="font-size:18px;font-weight:700;${d.win_rate>=50?'color:var(--green)':'color:var(--red)'}">${d.win_rate}%</div></div>
+          <div><div style="font-size:10px;color:var(--text2)">TOTAL TRADES</div>
+            <div style="font-size:16px;font-weight:700">${d.total_trades}</div></div>
+          <div><div style="font-size:10px;color:var(--text2)">W/L</div>
+            <div style="font-size:16px;font-weight:700"><span style="color:var(--green)">${d.wins}W</span> / <span style="color:var(--red)">${d.losses}L</span></div></div>
+        </div>
+      </div>
+      <div style="max-height:300px;overflow-y:auto">
+        ${d.trades.map(t => `
+          <div class="diary-entry ${t.win?'win':'loss'}" style="margin-bottom:6px">
+            <div class="diary-time">${t.open_time} → ${t.close_time}</div>
+            <div class="diary-text" style="display:flex;justify-content:space-between">
+              <span>${t.win?'✓':'✗'} ${fmt$(t.entry)} → ${fmt$(t.exit)}</span>
+              <span style="font-weight:700;color:${t.win?'var(--green)':'var(--red)'}">${t.pnl>=0?'+':'-'}${fmt$(Math.abs(t.pnl))}</span>
+            </div>
+          </div>`).join('')}
+      </div>`;
+  } catch(e) {
+    results.innerHTML = '<div class="empty-state" style="color:var(--red)">Backtest failed: ' + e.message + '</div>';
+  } finally {
+    btn.textContent = 'Run Backtest';
+    btn.disabled = false;
+  }
+}
+
+// ── Daily diary archive ───────────────────────────────────────────────────────
+async function loadDiaryDates() {
+  try {
+    const r = await fetch(RAILWAY_URL + '/diary/dates');
+    const d = await r.json();
+    const el = document.getElementById('diaryDates');
+    if (!el) return;
+    if (!d.dates || d.dates.length === 0) {
+      el.innerHTML = '<div class="empty-state">No archived diaries yet</div>';
+      return;
+    }
+    el.innerHTML = d.dates.map(date => `
+      <div class="settings-row" style="cursor:pointer" onclick="loadDiaryForDate('${date}')">
+        <div><div class="settings-label">${date}</div></div>
+        <i class="ti ti-chevron-right" style="color:var(--text2)"></i>
+      </div>`).join('<div class="divider"></div>');
+  } catch(e) {}
+}
+
+async function loadDiaryForDate(date) {
+  try {
+    const r = await fetch(RAILWAY_URL + '/diary/' + date);
+    const d = await r.json();
+    const entries = d.entries || [];
+    const modal = document.createElement('div');
+    modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.8);z-index:1000;overflow-y:auto;padding:20px';
+    modal.innerHTML = `
+      <div style="max-width:430px;margin:0 auto;background:var(--bg2);border-radius:var(--radius);padding:16px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+          <span style="font-weight:700;font-size:15px">Diary: ${date}</span>
+          <button onclick="this.closest('div[style*=fixed]').remove()" style="background:none;border:none;color:var(--text2);cursor:pointer;font-size:20px">✕</button>
+        </div>
+        ${entries.length === 0 ? '<div class="empty-state">No entries</div>' :
+          entries.map(e => `
+            <div class="diary-entry ${e.type||'trade'}" style="margin-bottom:8px">
+              <div class="diary-time">${e.time} · ${e.symbol}</div>
+              <div class="diary-text">${e.text}</div>
+            </div>`).join('')}
+      </div>`;
+    document.body.appendChild(modal);
+  } catch(e) {}
+}
+
+function showToast(msg) {
+  document.querySelectorAll('.toast').forEach(t => t.remove());
+  const t = document.createElement('div');
+  t.className = 'toast';
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => { t.style.opacity='0'; setTimeout(()=>t.remove(),300); }, 2000);
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+fetchLiveStatus();
+setInterval(fetchLiveStatus, 10000);
+loadAlpacaHistory();
+loadToggles();
+
+// Live prices handled by fetchLiveStatus every 10s
+</script>
+</body>
+</html>
